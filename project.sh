@@ -3,10 +3,11 @@
 
 _create()
 {
-  mkdir -p pro/{01_edit,02_lib/{animlib,chars/tex,fonts,props/tex,envs/tex,scripts,background/src},03_shots,04_sounds/{music,soundfx,vo}};
+  mkdir -p pro/{01_edit,02_lib/{animlib,chars/tex,fonts,props/tex,envs/tex,scripts,background/src},03_shots};
   mkdir -p pre/{breakdown,character,references,tutorial,storyboard/{_assets,_templates}}
   mkdir -p render/{animatic,frames,playblast};
   mkdir movies;
+  mkdir -p sounds/{music,soundfx,vo};
   mkdir -p extras/documents;
   echo "Project Folder Creation Success"
 }
