@@ -2,15 +2,28 @@
 #script for auto-compile inkscape-master
 
 # Get CPU Available
-numCores=$((`cat /proc/cpuinfo | grep processor | wc -l`))
+numCores=$((`cat /proc/cpuinfo | grep processor | wc -l`/2))
 
 _update_source()
 {
     #update the source code
-    cd $HOME/inkscape-src/inkscape && git-bzr pull && echo "### INKSCAPE LOGS ###" > $HOME/inkscape-src/logs.md
-    echo "-------------------------------" >> $HOME/inkscape-src/logs.md
+    cd $HOME/inkscape-src/inkscape
+    git fetch  && git pull
+}
+
+_update_log()
+{
+    #print the log
+    cd $HOME/inkscape-src/inkscape
+    branchname=$(git symbolic-ref --short -q HEAD)
+    echo "# Current Branch : ![alt text][logo] *$branchname*" > $HOME/inkscape-src/logs.md
+    echo '[logo]: file:///opt/inkscape/share/icons/hicolor/48x48/apps/inkscape.png "Logo Inkscape"' >> $HOME/inkscape-src/logs.md
     echo "" >> $HOME/inkscape-src/logs.md
-    git log --pretty=format:"%cn | committed %h | %s |  on %cr" -25 >> $HOME/inkscape-src/logs.md
+    echo "### INKSCAPE LOGS ###" >> $HOME/inkscape-src/logs.md
+    echo "" >> $HOME/inkscape-src/logs.md
+    echo "user | hash | comment | time" >> $HOME/inkscape-src/logs.md
+    echo "--- | --- | --- | ---" >> $HOME/inkscape-src/logs.md
+    git log --pretty=format:"%cn | %h | %s | %cr" -25 >> $HOME/inkscape-src/logs.md
 }
 
 _view_log()
@@ -20,15 +33,10 @@ _view_log()
 
 _compile_inkscape()
 {
-    cd $HOME/inkscape-src/inkscape/ #&& ./autogen.sh --prefix=INSTALL_PREFIX
-    make -j2
-    make install -j2
-    notify-send -t 2000 -i Inkscape "Compiling Inkscape" "Done"
-}
-
-_run_inkscape()
-{
-    cd $HOME/inkscape-src/ && sh run-inkscape.sh
+    cd $HOME/inkscape-src/build-linux/
+    make -j$numCores
+    make install -j$numCores
+    notify-send -t 2000 -i inkscape "Compiling Inkscape" "Done"
 }
 
 _endkey()
@@ -46,8 +54,7 @@ echo "   (1) Update & Compile Inkscape Source"
 echo "   (2) Update Only Inkscape Source"
 echo "   (3) Compile Only Inkscape Source"
 echo "   (4) View logs"
-echo "   (5) Run Inkscape"
-echo "   (6) Exit"
+echo "   (5) Exit"
 echo ""
 echo "------------------------------------------------------------"
 echo -n "               Enter your choice (1-6) then press [enter] :"
@@ -57,12 +64,14 @@ clear
 
   if [ "$mainmenu" = 1 ]; then
     _update_source
+    _update_log
     _compile_inkscape
     _view_log
     _endkey
 
   elif [ "$mainmenu" = 2 ]; then
     _update_source
+    _update_log
     _view_log
     _endkey
 
@@ -73,10 +82,6 @@ clear
 
   elif [ "$mainmenu" = 4 ]; then
     _view_log
-    _endkey
-
-  elif [ "$mainmenu" = 5 ]; then
-    _run_inkscape
     _endkey
 
   elif [ "$mainmenu" = 5 ]; then
