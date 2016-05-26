@@ -28,7 +28,7 @@ _update_log()
 
 _view_log()
 {
-    nano --softwrap $HOME/inkscape-src/logs.md
+    google-chrome $HOME/inkscape-src/logs.md
 }
 
 _compile_inkscape()
