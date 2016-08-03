@@ -5,6 +5,8 @@
 #: License     : GPL
 #  version 1.0
 
+: ${COMMITFILE=$HOME"/git/projects/aditia_blog/content/pages/commit-logs.md"}
+
 
     ########
     # CORE #
@@ -21,9 +23,9 @@
         git submodule foreach git pull --rebase origin master
 
         #Blender extra updates
-        cd $HOME/blender-git/git-addons/animation-nodes && git fetch -p && git pull
-        cd $HOME/blender-git/blender-asset-manager/ && git pull --rebase
-        cd $HOME/blender-git/flamenco/ && git pull --rebase
+        # cd $HOME/blender-git/git-addons/animation-nodes && git stash && git fetch -p && git pull
+        cd $HOME/blender-git/blender-asset-manager/ && git stash &&  git fetch -p && git pull --rebase
+        cd $HOME/blender-git/flamenco/ && git stash && git fetch -p && git pull --rebase
         cd $HOME/blender-git/blender_docs && svn update
     }
 
@@ -35,7 +37,7 @@
     _update_env()
     {
         cd $HOME/blender-git/blender/build_files/build_environment/
-        ./install_deps.sh --build-all --skip-osl
+        ./install_deps.sh  --build-all
     }
 
     _build_manual()
@@ -46,6 +48,37 @@
     _view_manual()
     {
         cd $HOME/blender-git/blender_docs && xdg-open build/html/contents.html
+    }
+
+    _update_commit_logs()
+    {
+      cd $HOME/blender-git/blender
+      BRANCH=$(git symbolic-ref --short -q HEAD)
+      NOW=$(date -R)
+echo 'title: Commit Logs
+
+<h2 style="border-bottom: 3px solid #cfd8dc; padding-bottom:15px;">
+  <i class="bf-blender"></i> BLENDER - BRANCH :
+  <i style="text-transform:uppercase;color:#c7254e">'$BRANCH'</i>
+  <span style="font-size:16px;font-weight:200;float:right;"> Compiled :
+    <time class="timeago" datetime="'$NOW'">'$NOW'</time>
+  </span>
+</h2>
+
+AUTHOR | HASH | MESSAGE
+--- | --- | ---' > $COMMITFILE
+      git log --pretty=format:'%cn | [`%h`](https://developer.blender.org/rB%h) | %s' -20 >> $COMMITFILE
+      cd $HOME/git/projects/aditia_blog
+      if output=$(git status --porcelain) && [ -z "$output" ]; then
+        # Working directory clean
+        make github
+      else
+        # Uncommitted changes
+        # git diff --exit-code
+        git commit -am "updated blender commit logs"
+        git push
+        make github
+      fi
     }
 
     _update_view_log()
@@ -61,14 +94,14 @@
         echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
         git log --pretty=format:'%cn | `%h` | %s | *%cr*' -30 >> $HOME/blender-git/log.md
 
-        cd $HOME/blender-git/git-addons/animation-nodes && echo "" >> $HOME/blender-git/log.md
-        echo "" >> $HOME/blender-git/log.md
-        echo "### ANIMATION NODES " >> $HOME/blender-git/log.md
+        #cd $HOME/blender-git/git-addons/animation-nodes && echo "" >> $HOME/blender-git/log.md
+        #echo "" >> $HOME/blender-git/log.md
+        #echo "### ANIMATION NODES " >> $HOME/blender-git/log.md
         #echo "-------------------------------" >> $HOME/blender-git/log.md
-        echo "" >> $HOME/blender-git/log.md
-        echo "user | hash | comment | time" >> $HOME/blender-git/log.md
-        echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
-        git log --pretty=format:'%cn | `%h` | %s | *%cr*' -15 >> $HOME/blender-git/log.md
+        #echo "" >> $HOME/blender-git/log.md
+        #echo "user | hash | comment | time" >> $HOME/blender-git/log.md
+        #echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
+        #git log --pretty=format:'%cn | `%h` | %s | *%cr*' -15 >> $HOME/blender-git/log.md
 
         cd $HOME/blender-git/blender/release/scripts/addons/ && echo "" >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
@@ -123,7 +156,6 @@
     _configure_and_build_sources()
     {
         cd $HOME/blender-git/blender/
-        make update
         make -j4
         notify-send -t 2000 -i blender "Compiling Blender GIT" "Done :D"
     }
@@ -187,6 +219,7 @@
         elif [ "$mainmenu" = 3 ]; then
             _update_sources
             _update_view_log
+            _update_commit_logs
             _view_log
             _endkey
 
