@@ -6,6 +6,11 @@
 #  version 1.0
 
 : ${COMMITFILE=$HOME"/git/projects/aditia_blog/content/pages/commit-logs.md"}
+: ${BLENDER="/home/aditia/blender-git/blender"}
+: ${BAM="/home/aditia/blender-git/blender-asset-manager"}
+: ${FLAMENCO="/home/aditia/blender-git/flamenco"}
+: ${DOCS="/home/aditia/blender-git/blender_docs"}
+: ${ADDONSGIT="/home/aditia/blender-git/git-addons"}
 
 
     ########
@@ -16,7 +21,7 @@
     _update_sources()
     {
         #Blender Main & Submodule Update
-        cd $HOME/blender-git/blender/
+        cd $BLENDER
         git stash
 	      git fetch -p
         git pull --rebase
@@ -24,35 +29,35 @@
 
         #Blender extra updates
         # cd $HOME/blender-git/git-addons/animation-nodes && git stash && git fetch -p && git pull
-        cd $HOME/blender-git/blender-asset-manager/ && git stash &&  git fetch -p && git pull --rebase
-        cd $HOME/blender-git/flamenco/ && git stash && git fetch -p && git pull --rebase
-        cd $HOME/blender-git/blender_docs && svn update
+        cd $BAM && git stash &&  git fetch -p && git pull --rebase
+        cd $FLAMENCO && git stash && git fetch -p && git pull --rebase
+        cd $DOCS && svn update
     }
 
     _update_addon_from_git()
     {
-        cd $HOME/blender-git/git-addons/ && ./git-pull-all.sh
+        cd $ADDONSGIT && ./git-pull-all.sh
     }
 
     _update_env()
     {
-        cd $HOME/blender-git/blender/build_files/build_environment/
-        ./install_deps.sh  --build-all
+        cd $BLENDER/build_files/build_environment/
+        ./install_deps.sh  --build-all --skip-openvdb
     }
 
     _build_manual()
     {
-        cd $HOME/blender-git/blender_docs && make
+        cd $DOCS && make
     }
 
     _view_manual()
     {
-        cd $HOME/blender-git/blender_docs && xdg-open build/html/contents.html
+        cd $DOCS && xdg-open build/html/contents.html
     }
 
     _update_commit_logs()
     {
-      cd $HOME/blender-git/blender
+      cd $BLENDER
       BRANCH=$(git symbolic-ref --short -q HEAD)
       NOW=$(date -R)
 echo 'title: Commit Logs
@@ -83,7 +88,7 @@ AUTHOR | HASH | MESSAGE
 
     _update_view_log()
     {
-        cd $HOME/blender-git/blender
+        cd $BLENDER
         branchname=$(git symbolic-ref --short -q HEAD)
         echo "# Current Branch : ![alt text][logo] *$branchname*" > $HOME/blender-git/log.md
         echo '[logo]: file:///home/aditia/blender-git/blender_48.png "Logo Blender"' >> $HOME/blender-git/log.md
@@ -103,7 +108,7 @@ AUTHOR | HASH | MESSAGE
         #echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
         #git log --pretty=format:'%cn | `%h` | %s | *%cr*' -15 >> $HOME/blender-git/log.md
 
-        cd $HOME/blender-git/blender/release/scripts/addons/ && echo "" >> $HOME/blender-git/log.md
+        cd $BLENDER/release/scripts/addons/ && echo "" >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "### ADDONS " >> $HOME/blender-git/log.md
         #echo "-------------------------------" >> $HOME/blender-git/log.md
@@ -112,7 +117,7 @@ AUTHOR | HASH | MESSAGE
         echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
         git log --pretty=format:'%cn | `%h` | %s | *%cr*' -15 >> $HOME/blender-git/log.md
 
-        cd $HOME/blender-git/blender/release/scripts/addons_contrib/ && echo "" >> $HOME/blender-git/log.md
+        cd $BLENDER/release/scripts/addons_contrib/ && echo "" >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "### ADDONS CONTRIB" >> $HOME/blender-git/log.md
         #echo "-------------------------------" >> $HOME/blender-git/log.md
@@ -121,7 +126,7 @@ AUTHOR | HASH | MESSAGE
         echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
         git log --pretty=format:'%cn | `%h` | %s | *%cr*' -15 >> $HOME/blender-git/log.md
 
-        cd $HOME/blender-git/blender-asset-manager/ && echo "" >> $HOME/blender-git/log.md
+        cd $BAM && echo "" >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "### BAM " >> $HOME/blender-git/log.md
         #echo "-------------------------------" >> $HOME/blender-git/log.md
@@ -130,7 +135,7 @@ AUTHOR | HASH | MESSAGE
         echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
         git log --pretty=format:'%cn | `%h` | %s | *%cr*' -15 >> $HOME/blender-git/log.md
 
-        cd $HOME/blender-git/flamenco/ && echo "" >> $HOME/blender-git/log.md
+        cd $FLAMENCO && echo "" >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "### FLAMENCO " >> $HOME/blender-git/log.md
         #echo "-------------------------------" >> $HOME/blender-git/log.md
@@ -139,7 +144,7 @@ AUTHOR | HASH | MESSAGE
         echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
         git log --pretty=format:'%cn | `%h` | %s |  *%cr*' -15 >> $HOME/blender-git/log.md
 
-        cd $HOME/blender-git/blender_docs  && echo "" >> $HOME/blender-git/log.md
+        cd $DOCS && echo "" >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "### BLENDER MANUAL " >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
@@ -155,20 +160,20 @@ AUTHOR | HASH | MESSAGE
 
     _configure_and_build_sources()
     {
-        cd $HOME/blender-git/blender/
+        cd $BLENDER
         make -j4
         notify-send -t 2000 -i blender "Compiling Blender GIT" "Done :D"
     }
 
     _check_branch()
     {
-        cd $HOME/blender-git/blender/
+        cd $BLENDER
         git branch
     }
 
     _gitg()
     {
-        cd $HOME/blender-git/blender/ && gitg
+        cd $BLENDER && gitg
     }
 
     _endkey()

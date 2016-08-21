@@ -1,4 +1,16 @@
 #!/bin/bash
+: ${ATOM="/home/aditia/git/apps/atom"}
+: ${ATOMBETA="/home/aditia/git/apps/atom-beta"}
+
+# Default to git pull with FF merge in quiet mode
+GIT_COMMAND="git pull --quiet"
+
+# User messages
+GU_ERROR_FETCH_FAIL="Unable to fetch the remote repository."
+GU_ERROR_UPDATE_FAIL="Unable to update the local repository."
+GU_ERROR_NO_GIT="This directory has not been initialized with Git."
+GU_INFO_REPOS_EQUAL="The local repository is current. No update is needed."
+GU_SUCCESS_REPORT="Update complete."
 
   _download_from_git()
   {
@@ -9,7 +21,7 @@
 
   _switch_to_master()
   {
-    cd $HOME/git/apps/atom && git fetch -p
+    cd $ATOM && git fetch -p
     git checkout master
     git pull
     echo "You are now in Master Branch"
@@ -17,7 +29,7 @@
 
   _switch_to_stable()
   {
-    cd $HOME/git/apps/atom && git fetch -p
+    cd $ATOM && git fetch -p
     git checkout stable
     git merge $(git describe --tags `git rev-list --tags --max-count=1`)
     echo "You are now in Stable Branch"
@@ -25,92 +37,138 @@
 
   _update_sources()
   {
-    cd $HOME/git/apps/atom && git stash && git fetch -p
-    branchname=$(git symbolic-ref --short -q HEAD)
-    if [ $branchname = "stable" ]; then
-      git merge $(git describe --tags `git rev-list --tags --max-count=1`)
+    cd $ATOM
+    git remote update >&-
+  	if (( $? )); then
+        echo $GU_ERROR_FETCH_FAIL >&2
+        exit 1
     else
-      git pull
+      BRANCH=$(git symbolic-ref --short -q HEAD)
+      LOCAL_SHA=$(git rev-parse --verify HEAD)
+      REMOTE_SHA=$(git rev-parse --verify FETCH_HEAD)
+      if [ $LOCAL_SHA = $REMOTE_SHA ]; then
+        echo $GU_INFO_REPOS_EQUAL
+        echo "Atom $BRANCH is up-to-date "
+      else
+        $GIT_COMMAND
+        echo "Now building atom $BRANCH"
+        script/build
+        echo "Now installing atom $BRANCH"
+        sudo script/grunt install
+        if (( $? )); then
+          echo $GU_ERROR_UPDATE_FAIL >&2
+          exit 1
+        else
+          echo $GU_SUCCESS_REPORT
+        fi
+      fi
     fi
+    # if [ $BRANCH = "stable" ]; then
+    #   git merge $(git describe --tags `git rev-list --tags --max-count=1`)
+    # else
+    #   git pull
+    # fi
   }
-  
+
   _update_beta()
   {
-    cd $HOME/git/apps/atom-beta 
-    git reset && git stash  
-    git fetch -p
-    git pull
+    cd $ATOMBETA
+    git remote update >&-
+  	if (( $? )); then
+        echo $GU_ERROR_FETCH_FAIL >&2
+        exit 1
+    else
+      BRANCH=$(git symbolic-ref --short -q HEAD)
+      LOCAL_SHA=$(git rev-parse --verify HEAD)
+      REMOTE_SHA=$(git rev-parse --verify FETCH_HEAD)
+      if [ $LOCAL_SHA = $REMOTE_SHA ]; then
+        echo $GU_INFO_REPOS_EQUAL
+        echo "Atom $BRANCH is up-to-date "
+      else
+        $GIT_COMMAND
+        echo "Now building atom $BRANCH"
+        script/build
+        echo "Now installing atom $BRANCH"
+        sudo script/grunt install
+        if (( $? )); then
+          echo $GU_ERROR_UPDATE_FAIL >&2
+          exit 1
+        else
+          echo $GU_SUCCESS_REPORT
+        fi
+      fi
+    fi
   }
-  
+
   _update_all_packages()
   {
     apm update
     apm rebuild
   }
-  
+
   _print_log()
   {
-    cd $HOME/git/apps/atom
-    branchname=$(git symbolic-ref --short -q HEAD)
-    echo "# Atom Development Log" > $HOME/git/apps/atom/log.md
-    echo "" >> $HOME/git/apps/atom/log.md
-    echo "### ATOM ![masterlogo](file:////home/aditia/git/apps/atom/resources/app-icons/dev/png/24.png) *$branchname*" >> $HOME/git/apps/atom/log.md
-    echo "---" >> $HOME/git/apps/atom/log.md
-    echo "" >> $HOME/git/apps/atom/log.md
-    echo "user | hash | comment | time" >> $HOME/git/apps/atom/log.md
-    echo "--- | --- | --- | ---" >> $HOME/git/apps/atom/log.md
-    git log --pretty=format:'%cn | `%h` | %s |  on %cr' -15 >> $HOME/git/apps/atom/log.md
-    echo "" >> $HOME/git/apps/atom/log.md
-    echo "" >> $HOME/git/apps/atom/log.md
-    echo "---" >> $HOME/git/apps/atom/log.md
-    cd $HOME/git/apps/atom-beta
-    branchname=$(git symbolic-ref --short -q HEAD)
-    echo "" >> $HOME/git/apps/atom/log.md
-    echo "### ATOM-BETA ![betalogo](file:////home/aditia/git/apps/atom-beta/resources/app-icons/beta/png/24.png) *$branchname*" >> $HOME/git/apps/atom/log.md
-    echo "---" >> $HOME/git/apps/atom/log.md
-    echo "" >> $HOME/git/apps/atom/log.md
-    echo "user | hash | comment | time" >> $HOME/git/apps/atom/log.md
-    echo "--- | --- | --- | ---" >> $HOME/git/apps/atom/log.md
-    git log --pretty=format:'%cn | `%h` | %s |  on %cr' -15 >> $HOME/git/apps/atom/log.md
+    cd $ATOM
+    BRANCH=$(git symbolic-ref --short -q HEAD)
+    echo "# Atom Development Log" > $ATOM/log.md
+    echo "" >> $ATOM/log.md
+    echo "### ATOM ![masterlogo](file:////home/aditia/git/apps/atom/resources/app-icons/dev/png/24.png) *$BRANCH*" >> $ATOM/log.md
+    echo "---" >> $ATOM/log.md
+    echo "" >> $ATOM/log.md
+    echo "user | hash | comment | time" >> $ATOM/log.md
+    echo "--- | --- | --- | ---" >> $ATOM/log.md
+    git log --pretty=format:'%cn | `%h` | %s |  on %cr' -15 >> $ATOM/log.md
+    echo "" >> $ATOM/log.md
+    echo "" >> $ATOM/log.md
+    echo "---" >> $ATOM/log.md
+    cd $ATOMBETA
+    BRANCH=$(git symbolic-ref --short -q HEAD)
+    echo "" >> $ATOM/log.md
+    echo "### ATOM-BETA ![betalogo](file:////home/aditia/git/apps/atom-beta/resources/app-icons/beta/png/24.png) *$BRANCH*" >> $ATOM/log.md
+    echo "---" >> $ATOM/log.md
+    echo "" >> $ATOM/log.md
+    echo "user | hash | comment | time" >> $ATOM/log.md
+    echo "--- | --- | --- | ---" >> $ATOM/log.md
+    git log --pretty=format:'%cn | `%h` | %s |  on %cr' -15 >> $ATOM/log.md
   }
-  
+
   _clean()
   {
-    cd $HOME/git/apps/atom
+    cd $ATOM
     script/clean
-    cd $HOME/git/apps/atom-beta
+    cd $ATOMBETA
     script/clean
     sleep 3s
     echo 'Success Clean Build'
   }
-  
+
   _build()
   {
-    cd $HOME/git/apps/atom
+    cd $ATOM
     script/build
   }
-  
+
   _build_beta()
   {
-    cd $HOME/git/apps/atom-beta
+    cd $ATOMBETA
     script/build
   }
-  
+
   _install()
   {
-    cd $HOME/git/apps/atom
+    cd $ATOM
     sudo script/grunt install
   }
-  
+
   _install_beta()
   {
-    cd $HOME/git/apps/atom-beta
+    cd $ATOMBETA
     sudo script/grunt install
   }
-  
+
   _make_deb()
   {
-    cd $HOME/git/apps/atom
+    cd $ATOM
     sudo script/grunt mkdeb
   }
 
@@ -122,7 +180,7 @@
 
   _view_log()
   {
-    cd $HOME/git/apps/atom && google-chrome log.md
+    cd $ATOM && google-chrome log.md
   }
 
   _endkey()
@@ -139,12 +197,11 @@ clear
 echo "ATOM-UPDATE"
 echo "------------------------------------------------------------"
 echo ""
-echo "   (1) Update Source and Clean Build Only"
-echo "   (2) Update Source and View Logs Only"
-echo "   (3) Compile, Install and View Logs Only"
-echo "   (4) Make DEB and Install"
-echo "   (5) Download from git"
-echo "   (6) Exit"
+echo "   (1) Update Source, Build and Install Only"
+echo "   (2) Clean, Compile, Install and View Logs Only"
+echo "   (3) Make DEB and Install"
+echo "   (4) Download from git"
+echo "   (5) Exit"
 echo ""
 echo "------------------------------------------------------------"
 echo -n "               Enter your choice (1-6) then press [enter] :"
@@ -156,18 +213,10 @@ clear
     _update_sources
     _update_beta
     _print_log
-    _clean
     _view_log
     _endkey
 
   elif [ "$mainmenu" = 2 ]; then
-    _update_sources
-    _update_beta
-    _print_log
-    _view_log
-    _endkey
-
-  elif [ "$mainmenu" = 3 ]; then
     _build
     _build_beta
     _install
@@ -175,19 +224,18 @@ clear
     _view_log
     _endkey
 
-  elif [ "$mainmenu" = 4 ]; then
+  elif [ "$mainmenu" = 3 ]; then
     _make_deb
     _install_deb
     _endkey
 
-  elif [ "$mainmenu" = 5 ]; then
+  elif [ "$mainmenu" = 4 ]; then
     _download_from_git
     _endkey
 
-  elif [ "$mainmenu" = 6 ]; then
+  elif [ "$mainmenu" = 5 ]; then
     _endkey
 
   else
     echo "the script couldn't understand your choice, try again...";
   fi;
- 

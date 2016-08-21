@@ -1,19 +1,27 @@
 #!/bin/sh
+# Git Repo Location
 : ${ARCTHEME="/home/aditia/git/xfce4/arc-theme"}
 : ${ADAPTA="/home/aditia/git/xfce4/Adapta"}
 : ${ARCGREY="/home/aditia/git/xfce4/arc-grey-theme"}
 : ${ARCICON="/home/aditia/git/xfce4/arc-icon-theme"}
 : ${MOKAICON="/home/aditia/git/xfce4/moka-icon-theme"}
 : ${PAPERICON="/home/aditia/git/xfce4/paper-icon-theme"}
+: ${NUMIXICON="/home/aditia/git/xfce4/numix-icon-theme/"}
+: ${NUMIXCIRCLEICON="/home/aditia/git/xfce4/numix-icon-theme-circle/"}
+
+# Default to git pull with FF merge in quiet mode
+GIT_COMMAND="git pull --quiet"
+
+# User messages
+GU_ERROR_FETCH_FAIL="Unable to fetch the remote repository."
+GU_ERROR_UPDATE_FAIL="Unable to update the local repository."
+GU_ERROR_NO_GIT="This directory has not been initialized with Git."
+GU_INFO_REPOS_EQUAL="The local repository is current. No update is needed."
+GU_SUCCESS_REPORT="Update complete."
 
 _update_arc()
 {
 	cd $ARCTHEME
-	git reset
-	git stash
-	git clean -fdx
-	git fetch
-	git pull
 	echo "#ARC THEME " > $ARCTHEME/logs.md
   echo "" >> $ARCTHEME/logs.md
   echo "user | hash | comment | time"  >> $ARCTHEME/logs.md
@@ -21,11 +29,6 @@ _update_arc()
   git log --pretty=format:'%cn | `%h` | %s |  *%cr*' -15 >> $ARCTHEME/logs.md
 
 	cd $ARCGREY
-	git reset
-	git stash
-  git clean -fdx
-	git fetch
-	git pull
   echo "" >> $ARCTHEME/logs.md
 	echo "#ARC GREY THEME " >> $ARCTHEME/logs.md
   echo "" >> $ARCTHEME/logs.md
@@ -34,11 +37,6 @@ _update_arc()
 	git log --pretty=format:'%cn | `%h` | %s |  *%cr*' -15 >> $ARCTHEME/logs.md
 
 	cd $ADAPTA
-	git reset
-	git stash
-  git clean -fdx
-	git fetch
-	git pull
   echo "" >> $ARCTHEME/logs.md
 	echo "#ADAPTA THEME " >> $ARCTHEME/logs.md
   echo "" >> $ARCTHEME/logs.md
@@ -49,11 +47,6 @@ _update_arc()
 _update_arc_moka_icon()
 {
 	cd $ARCICON
-  git reset
-	git stash
-  git clean -fdx
-	git fetch
-	git pull
   echo "" >> $ARCTHEME/logs.md
 	echo "" >> $ARCTHEME/logs.md
 	echo "# ARC ICON" >> $ARCTHEME/logs.md
@@ -63,11 +56,6 @@ _update_arc_moka_icon()
   git log --pretty=format:'%cn | `%h` | %s |  *%cr*' -15 >> $ARCTHEME/logs.md
 
 	cd $MOKAICON
-	git reset
-	git stash
-  git clean -fdx
-	git fetch
-	git pull
 	echo "" >> $ARCTHEME/logs.md
 	echo "# MOKA ICON" >> $ARCTHEME/logs.md
   echo "user | hash | comment | time"  >> $ARCTHEME/logs.md
@@ -75,89 +63,241 @@ _update_arc_moka_icon()
 	git log --pretty=format:"%cn | committed %h | %s |  on %cr" -15 >> $ARCTHEME/logs.md
 
 	cd $PAPERICON
-	git reset
-	git stash
-  git clean -fdx
-	git fetch
-	git pull
 	echo "" >> $ARCTHEME/logs.md
 	echo "# PAPER ICON" >> $ARCTHEME/logs.md
+  echo "user | hash | comment | time"  >> $ARCTHEME/logs.md
+  echo "--- | --- | --- | ---" >> $ARCTHEME/logs.md
+	git log --pretty=format:"%cn | committed %h | %s |  on %cr" -15 >> $ARCTHEME/logs.md
+
+	cd $NUMIXICON
+	echo "" >> $ARCTHEME/logs.md
+	echo "# NUMIX ICON" >> $ARCTHEME/logs.md
+  echo "user | hash | comment | time"  >> $ARCTHEME/logs.md
+  echo "--- | --- | --- | ---" >> $ARCTHEME/logs.md
+	git log --pretty=format:"%cn | committed %h | %s |  on %cr" -15 >> $ARCTHEME/logs.md
+
+	cd $NUMIXCIRCLEICON
+	echo "" >> $ARCTHEME/logs.md
+	echo "# NUMIX CIRCLE ICON" >> $ARCTHEME/logs.md
   echo "user | hash | comment | time"  >> $ARCTHEME/logs.md
   echo "--- | --- | --- | ---" >> $ARCTHEME/logs.md
 	git log --pretty=format:"%cn | committed %h | %s |  on %cr" -15 >> $ARCTHEME/logs.md
 }
 _install_arc()
 {
-	LOCAL=$(git rev-parse @)
-	REMOTE=$(git rev-parse @{u})
-	BASE=$(git merge-base @ @{u})
-
-	clear
 	cd $ARCTHEME
-	if [ $LOCAL = $REMOTE ]; then
-		echo "Arc Theme is up-to-date"
-	else
-		sudo rm -rf /usr/share/themes/{Arc,Arc-Dark,Arc-Darker}
-		rm -rf ~/.local/share/themes/{Arc,Arc-Dark,Arc-Darker}
-		rm -rf ~/.themes/{Arc,Arc-Dark,Arc-Darker}
-		./autogen.sh --prefix=/usr
-		sudo make install
+	git remote update >&-
+	if (( $? )); then
+      echo $GU_ERROR_FETCH_FAIL >&2
+      exit 1
+  else
+		LOCAL=$(git rev-parse --verify HEAD)
+		REMOTE=$(git rev-parse --verify FETCH_HEAD)
+		if [ $LOCAL = $REMOTE ]; then
+			echo "Now updating Arc Theme ..."
+			echo $GU_INFO_REPOS_EQUAL
+		else
+			git reset && git stash && git clean -fdx
+			$GIT_COMMAND
+			sudo rm -rf /usr/share/themes/{Arc,Arc-Dark,Arc-Darker}
+			rm -rf ~/.local/share/themes/{Arc,Arc-Dark,Arc-Darker}
+			rm -rf ~/.themes/{Arc,Arc-Dark,Arc-Darker}
+			./autogen.sh --prefix=/usr
+			sudo make install
+      if (( $? )); then
+				echo $GU_ERROR_UPDATE_FAIL >&2
+        exit 1
+      else
+        echo $GU_SUCCESS_REPORT
+      fi
+		fi
 	fi
 
 	cd $ARCGREY
-	if [ $LOCAL = $REMOTE ]; then
-		echo "Arc Grey Theme is up-to-date"
-	else
-		sudo rm -rf /usr/share/themes/{Arc-Grey,Arc-Dark-Grey,Arc-Darker-Grey}
-		rm -rf ~/.local/share/themes/{Arc-Grey,Arc-Dark-Grey,Arc-Darker-Grey}
-		rm -rf ~/.themes/{Arc-Grey,Arc-Dark-Grey,Arc-Darker-Grey}
-		./autogen.sh --prefix=/usr
-		sudo make install
+	git remote update >&-
+	if (( $? )); then
+      echo $GU_ERROR_FETCH_FAIL >&2
+      exit 1
+  else
+		LOCAL=$(git rev-parse --verify HEAD)
+		REMOTE=$(git rev-parse --verify FETCH_HEAD)
+		if [ $LOCAL = $REMOTE ]; then
+			echo "Now updating Arc Grey Theme ..."
+			echo $GU_INFO_REPOS_EQUAL
+		else
+			git reset && git stash && git clean -fdx
+			$GIT_COMMAND
+			sudo rm -rf /usr/share/themes/{Arc-Grey,Arc-Dark-Grey,Arc-Darker-Grey}
+			rm -rf ~/.local/share/themes/{Arc-Grey,Arc-Dark-Grey,Arc-Darker-Grey}
+			rm -rf ~/.themes/{Arc-Grey,Arc-Dark-Grey,Arc-Darker-Grey}
+			./autogen.sh --prefix=/usr
+			sudo make install
+			if (( $? )); then
+				echo $GU_ERROR_UPDATE_FAIL >&2
+        exit 1
+      else
+        echo $GU_SUCCESS_REPORT
+      fi
+		fi
 	fi
 
 	cd $ARCICON
-	if [ $LOCAL = $REMOTE ]; then
-		echo "Arc Icon is up-to-date"
-	else
-		./autogen.sh --prefix=/usr
-		sudo make install
+	git remote update >&-
+	if (( $? )); then
+      echo $GU_ERROR_FETCH_FAIL >&2
+      exit 1
+  else
+		LOCAL=$(git rev-parse --verify HEAD)
+		REMOTE=$(git rev-parse --verify FETCH_HEAD)
+		if [ $LOCAL = $REMOTE ]; then
+			echo "Now updating Arc Icon Theme ..."
+			echo $GU_INFO_REPOS_EQUAL
+		else
+			git reset && git stash && git clean -fdx
+			$GIT_COMMAND
+			./autogen.sh --prefix=/usr
+			sudo make install
+			sudo gtk-update-icon-cache /usr/share/icons/Arc
+			if (( $? )); then
+				echo $GU_ERROR_UPDATE_FAIL >&2
+        exit 1
+      else
+        echo $GU_SUCCESS_REPORT
+      fi
+		fi
 	fi
 
 	cd $PAPERICON
-	if [ $LOCAL = $REMOTE ]; then
-		echo "Paper Icon is up-to-date"
-	else
-		./autogen.sh
-		make
-		sudo make install
+	git remote update >&-
+	if (( $? )); then
+      echo $GU_ERROR_FETCH_FAIL >&2
+      exit 1
+  else
+		LOCAL=$(git rev-parse --verify HEAD)
+		REMOTE=$(git rev-parse --verify FETCH_HEAD)
+		if [ $LOCAL = $REMOTE ]; then
+			echo "Now updating Paper Icon Theme ..."
+			echo $GU_INFO_REPOS_EQUAL
+		else
+			git reset && git stash && git clean -fdx
+			$GIT_COMMAND
+			./autogen.sh
+			make
+			sudo make install
+			sudo gtk-update-icon-cache /usr/share/icons/Paper
+			if (( $? )); then
+				echo $GU_ERROR_UPDATE_FAIL >&2
+        exit 1
+      else
+        echo $GU_SUCCESS_REPORT
+      fi
+		fi
 	fi
 
 	cd $ADAPTA
-	if [ $LOCAL = $REMOTE ]; then
-		echo "Adapta Theme is up-to-date"
-	else
-		sudo rm -rf /usr/share/themes/{Adapta-Nokto}
-		rm -rf ~/.local/share/themes/{Adapta-Nokto}
-		rm -rf ~/.themes/{Adapta-Nokto}
-		./autogen.sh --enable-parallel --enable-plank --enable-chrome
-		make
-		sudo make install
+	git remote update >&-
+	if (( $? )); then
+    echo $GU_ERROR_FETCH_FAIL >&2
+    exit 1
+  else
+		LOCAL=$(git rev-parse --verify HEAD)
+		REMOTE=$(git rev-parse --verify FETCH_HEAD)
+		if [ $LOCAL = $REMOTE ]; then
+			echo "Now updating Adapta Theme ..."
+			echo $GU_INFO_REPOS_EQUAL
+		else
+			git reset && git stash && git clean -fdx
+			$GIT_COMMAND
+			sudo rm -rf /usr/share/themes/{Adapta-Nokto}
+			rm -rf ~/.local/share/themes/{Adapta-Nokto}
+			rm -rf ~/.themes/{Adapta-Nokto}
+			./autogen.sh --enable-parallel --enable-plank --enable-chrome
+			make
+			sudo make install
+			if (( $? )); then
+				echo $GU_ERROR_UPDATE_FAIL >&2
+        exit 1
+      else
+        echo $GU_SUCCESS_REPORT
+      fi
+		fi
 	fi
 
 	cd $MOKAICON
-	if [ $LOCAL = $REMOTE ]; then
-		echo "Moka Icon is up-to-date"
-	else
-		./autogen.sh
-		make && sudo make install
+	git remote update >&-
+	if (( $? )); then
+    echo $GU_ERROR_FETCH_FAIL >&2
+    exit 1
+  else
+		LOCAL=$(git rev-parse --verify HEAD)
+		REMOTE=$(git rev-parse --verify FETCH_HEAD)
+		if [ $LOCAL = $REMOTE ]; then
+			echo "Now updating Moka Icon Theme ..."
+			echo $GU_INFO_REPOS_EQUAL
+		else
+			git reset && git stash && git clean -fdx
+			$GIT_COMMAND
+			./autogen.sh
+			make && sudo make install
+			sudo gtk-update-icon-cache /usr/share/icons/Moka
+			if (( $? )); then
+				echo $GU_ERROR_UPDATE_FAIL >&2
+				exit 1
+			else
+				echo $GU_SUCCESS_REPORT
+			fi
+		fi
 	fi
-}
-_gtk_icon_update()
-{
-	sudo gtk-update-icon-cache /usr/share/icons/Arc
-	sudo gtk-update-icon-cache /usr/share/icons/Moka
-	sudo gtk-update-icon-cache /usr/share/icons/Paper
 
+	cd $NUMIXICON
+	git remote update >&-
+	if (( $? )); then
+    echo $GU_ERROR_FETCH_FAIL >&2
+    exit 1
+  else
+		LOCAL=$(git rev-parse --verify HEAD)
+		REMOTE=$(git rev-parse --verify FETCH_HEAD)
+		if [ $LOCAL = $REMOTE ]; then
+			echo "Now updating Numix Icon Theme ..."
+			echo $GU_INFO_REPOS_EQUAL
+		else
+			git reset && git stash && git clean -fdx
+			$GIT_COMMAND
+			sudo gtk-update-icon-cache /usr/share/icons/Numix
+			sudo gtk-update-icon-cache /usr/share/icons/Numix-Light/
+			if (( $? )); then
+				echo $GU_ERROR_UPDATE_FAIL >&2
+				exit 1
+			else
+				echo $GU_SUCCESS_REPORT
+			fi
+		fi
+	fi
+
+	cd $NUMIXCIRCLEICON
+	git remote update >&-
+	if (( $? )); then
+    echo $GU_ERROR_FETCH_FAIL >&2
+    exit 1
+  else
+		LOCAL=$(git rev-parse --verify HEAD)
+		REMOTE=$(git rev-parse --verify FETCH_HEAD)
+		if [ $LOCAL = $REMOTE ]; then
+			echo "Now updating Numix-Circle Icon Theme ..."
+			echo $GU_INFO_REPOS_EQUAL
+		else
+			git reset && git stash && git clean -fdx
+			$GIT_COMMAND
+			sudo gtk-update-icon-cache /usr/share/icons/Numix-Circle/
+			sudo gtk-update-icon-cache /usr/share/icons/Numix-Circle-Light/
+			if (( $? )); then
+				echo $GU_ERROR_UPDATE_FAIL >&2
+				exit 1
+			else
+				echo $GU_SUCCESS_REPORT
+			fi
+		fi
+	fi
 }
 _view_log()
 {
@@ -169,9 +309,8 @@ _endkey()
   read END
 }
 ### run de skript
+_install_arc
 _update_arc
 _update_arc_moka_icon
-_install_arc
-_gtk_icon_update
 _view_log
 _endkey

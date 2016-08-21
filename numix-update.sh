@@ -20,7 +20,7 @@
     cd $NUMIXICONCIRCLE
     git clean -f && git stash && git fetch -p && git pull origin master --rebase
     cd $NUMIXFOLDER
-    git clean -f && git stash && git fetch -p && pull origin master --rebase
+    git clean -f && git stash && git fetch -p && git pull origin master --rebase
     cd $HARDCODE
     git clean -f && git stash && git fetch -p && git pull origin master --rebase
     #cd $OVERPASS
@@ -36,11 +36,11 @@
     cd $NUMIXGTK
     sudo chmod -R 777 .
     #exec >/dev/null 2>&1
-    sudo rm -r /usr/share/themes/Numix
+    rm -rf /usr/share/themes/Numix/*
     sleep 2s
-    echo "Old Numix Folder removed"
+    echo "Old Numix Data removed"
     make
-    sudo make install
+    make install
     sleep 2s
     echo "Numix GTK Updated"
 
@@ -131,6 +131,13 @@
   {
     cd /opt/numix-folders && sudo ./numix-folders
   }
+  _gtk_icon_update()
+  {
+	sudo gtk-update-icon-cache /usr/share/icons/Numix-Circle
+	sudo gtk-update-icon-cache /usr/share/icons/Numix-Circle-Light
+	sleep 3s
+	echo "Icon Cache Updated"
+  }
 
   _endkey()
   {
@@ -157,6 +164,7 @@ clear
 
   if [ "$mainmenu" = 1 ]; then
     _update_all
+    _gtk_icon_update
     _build_numix_gtk
     _print_log
     _view_log
