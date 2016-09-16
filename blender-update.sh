@@ -99,15 +99,6 @@ AUTHOR | HASH | MESSAGE
         echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
         git log --pretty=format:'%cn | `%h` | %s | *%cr*' -30 >> $HOME/blender-git/log.md
 
-        #cd $HOME/blender-git/git-addons/animation-nodes && echo "" >> $HOME/blender-git/log.md
-        #echo "" >> $HOME/blender-git/log.md
-        #echo "### ANIMATION NODES " >> $HOME/blender-git/log.md
-        #echo "-------------------------------" >> $HOME/blender-git/log.md
-        #echo "" >> $HOME/blender-git/log.md
-        #echo "user | hash | comment | time" >> $HOME/blender-git/log.md
-        #echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
-        #git log --pretty=format:'%cn | `%h` | %s | *%cr*' -15 >> $HOME/blender-git/log.md
-
         cd $BLENDER/release/scripts/addons/ && echo "" >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "### ADDONS " >> $HOME/blender-git/log.md

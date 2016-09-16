@@ -54,7 +54,7 @@ GU_SUCCESS_REPORT="Update complete."
         echo "Now building atom $BRANCH"
         script/build
         echo "Now installing atom $BRANCH"
-        sudo script/grunt install
+        sudo script/build --install
         if (( $? )); then
           echo $GU_ERROR_UPDATE_FAIL >&2
           exit 1
@@ -89,7 +89,7 @@ GU_SUCCESS_REPORT="Update complete."
         echo "Now building atom $BRANCH"
         script/build
         echo "Now installing atom $BRANCH"
-        sudo script/grunt install
+        sudo script/build --install
         if (( $? )); then
           echo $GU_ERROR_UPDATE_FAIL >&2
           exit 1
@@ -157,13 +157,13 @@ GU_SUCCESS_REPORT="Update complete."
   _install()
   {
     cd $ATOM
-    sudo script/grunt install
+    sudo script/build --install
   }
 
   _install_beta()
   {
     cd $ATOMBETA
-    sudo script/grunt install
+    sudo script/build --install
   }
 
   _make_deb()
