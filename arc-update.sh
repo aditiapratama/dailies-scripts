@@ -6,8 +6,9 @@
 : ${ARCICON="/home/aditia/git/xfce4/arc-icon-theme"}
 : ${MOKAICON="/home/aditia/git/xfce4/moka-icon-theme"}
 : ${PAPERICON="/home/aditia/git/xfce4/paper-icon-theme"}
-: ${NUMIXICON="/home/aditia/git/xfce4/numix-icon-theme/"}
-: ${NUMIXCIRCLEICON="/home/aditia/git/xfce4/numix-icon-theme-circle/"}
+: ${NUMIXICON="/home/aditia/git/xfce4/numix-icon-theme"}
+: ${NUMIXCIRCLEICON="/home/aditia/git/xfce4/numix-icon-theme-circle"}
+: ${PAPIRUSICON="/home/aditia/git/xfce4/papirus-icon-theme-gtk"}
 
 # Default to git pull with FF merge in quiet mode
 GIT_COMMAND="git pull --quiet"
@@ -65,6 +66,13 @@ _update_arc_moka_icon()
 	cd $PAPERICON
 	echo "" >> $ARCTHEME/logs.md
 	echo "# PAPER ICON" >> $ARCTHEME/logs.md
+  echo "user | hash | comment | time"  >> $ARCTHEME/logs.md
+  echo "--- | --- | --- | ---" >> $ARCTHEME/logs.md
+	git log --pretty=format:"%cn | committed %h | %s |  on %cr" -15 >> $ARCTHEME/logs.md
+
+	cd $PAPIRUSICON
+	echo "" >> $ARCTHEME/logs.md
+	echo "# PAPIRUS ICON" >> $ARCTHEME/logs.md
   echo "user | hash | comment | time"  >> $ARCTHEME/logs.md
   echo "--- | --- | --- | ---" >> $ARCTHEME/logs.md
 	git log --pretty=format:"%cn | committed %h | %s |  on %cr" -15 >> $ARCTHEME/logs.md
@@ -194,34 +202,34 @@ _install_arc()
 		fi
 	fi
 
-	cd $ADAPTA
-	git remote update >&-
-	if (( $? )); then
-    echo $GU_ERROR_FETCH_FAIL >&2
-    exit 1
-  else
-		LOCAL=$(git rev-parse --verify HEAD)
-		REMOTE=$(git rev-parse --verify FETCH_HEAD)
-		if [ $LOCAL = $REMOTE ]; then
-			echo "Now updating Adapta Theme ..."
-			echo $GU_INFO_REPOS_EQUAL
-		else
-			git reset && git stash && git clean -fdx
-			$GIT_COMMAND
-			sudo rm -rf /usr/share/themes/{Adapta-Nokto}
-			rm -rf ~/.local/share/themes/{Adapta-Nokto}
-			rm -rf ~/.themes/{Adapta-Nokto}
-			./autogen.sh --enable-parallel --enable-plank --enable-chrome
-			make
-			sudo make install
-			if (( $? )); then
-				echo $GU_ERROR_UPDATE_FAIL >&2
-        exit 1
-      else
-        echo $GU_SUCCESS_REPORT
-      fi
-		fi
-	fi
+	# cd $ADAPTA
+	# git remote update >&-
+	# if (( $? )); then
+  #   echo $GU_ERROR_FETCH_FAIL >&2
+  #   exit 1
+  # else
+	# 	LOCAL=$(git rev-parse --verify HEAD)
+	# 	REMOTE=$(git rev-parse --verify FETCH_HEAD)
+	# 	if [ $LOCAL = $REMOTE ]; then
+	# 		echo "Now updating Adapta Theme ..."
+	# 		echo $GU_INFO_REPOS_EQUAL
+	# 	else
+	# 		git reset && git stash && git clean -fdx
+	# 		$GIT_COMMAND
+	# 		sudo rm -rf /usr/share/themes/{Adapta-Nokto}
+	# 		rm -rf ~/.local/share/themes/{Adapta-Nokto}
+	# 		rm -rf ~/.themes/{Adapta-Nokto}
+	# 		./autogen.sh --enable-parallel --enable-plank --enable-chrome
+	# 		make
+	# 		sudo make install
+	# 		if (( $? )); then
+	# 			echo $GU_ERROR_UPDATE_FAIL >&2
+  #       exit 1
+  #     else
+  #       echo $GU_SUCCESS_REPORT
+  #     fi
+	# 	fi
+	# fi
 
 	cd $MOKAICON
 	git remote update >&-
@@ -240,6 +248,31 @@ _install_arc()
 			./autogen.sh
 			make && sudo make install
 			sudo gtk-update-icon-cache /usr/share/icons/Moka
+			if (( $? )); then
+				echo $GU_ERROR_UPDATE_FAIL >&2
+				exit 1
+			else
+				echo $GU_SUCCESS_REPORT
+			fi
+		fi
+	fi
+
+	cd $PAPIRUSICON
+	git remote update >&-
+	if (( $? )); then
+    echo $GU_ERROR_FETCH_FAIL >&2
+    exit 1
+  else
+		LOCAL=$(git rev-parse --verify HEAD)
+		REMOTE=$(git rev-parse --verify FETCH_HEAD)
+		if [ $LOCAL = $REMOTE ]; then
+			echo "Now updating Papirus Icon Theme ..."
+			echo $GU_INFO_REPOS_EQUAL
+		else
+			git reset && git stash && git clean -fdx
+			$GIT_COMMAND
+			sudo gtk-update-icon-cache /usr/share/icons/Papirus-GTK/
+			sudo gtk-update-icon-cache /usr/share/icons/Papirus-Dark-GTK/
 			if (( $? )); then
 				echo $GU_ERROR_UPDATE_FAIL >&2
 				exit 1
