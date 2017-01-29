@@ -3,9 +3,10 @@ import sys
 import subprocess
 
 for file in os.listdir("."):
-    if file.endswith("_light.blend"):
+    if file.endswith("_light.blend") and not file.find('010500_light.blend') != -1:
         file = os.path.abspath(file)
         filename = os.path.basename(os.path.splitext(file)[0])
+        #print(filename)
         #frame = 10 #pick random frame here
         if sys.platform.startswith('win32'):
             command = 'D:\\blender-2.78-windows64\\blender.exe -b "%s"' %file \

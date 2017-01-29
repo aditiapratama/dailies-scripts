@@ -3,7 +3,8 @@ import sys
 import subprocess
 
 for file in os.listdir("."):
-    if file[-7:-6].isnumeric() and file.startswith("09") and file.find("light") != -1:
+    # if file[-7:-6].isnumeric() and file.startswith("09") and file.find("light") != -1:
+    if file.startswith("09") and file.endswith("_light.blend"):
         file = os.path.abspath(file)
         filename = os.path.basename(os.path.splitext(file)[0])
         frame = 10 #pick random frame here

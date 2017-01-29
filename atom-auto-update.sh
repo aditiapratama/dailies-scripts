@@ -52,6 +52,7 @@ GU_SUCCESS_REPORT="Update complete."
       else
         $GIT_COMMAND
         echo "Now building atom $BRANCH"
+        sudo chown -R aditia:nobody $ATOM
         script/build
         echo "Now installing atom $BRANCH"
         sudo script/build --install
@@ -87,6 +88,7 @@ GU_SUCCESS_REPORT="Update complete."
       else
         $GIT_COMMAND
         echo "Now building atom $BRANCH"
+        sudo chown -R aditia:nobody $ATOMBETA
         script/build
         echo "Now installing atom $BRANCH"
         sudo script/build --install
@@ -135,8 +137,10 @@ GU_SUCCESS_REPORT="Update complete."
   _clean()
   {
     cd $ATOM
+    sudo chown -R aditia:nobody $ATOM
     script/clean
     cd $ATOMBETA
+    sudo chown -R aditia:nobody $ATOMBETA
     script/clean
     sleep 3s
     echo 'Success Clean Build'
@@ -145,12 +149,14 @@ GU_SUCCESS_REPORT="Update complete."
   _build()
   {
     cd $ATOM
+    sudo chown -R aditia:nobody $ATOM
     script/build
   }
 
   _build_beta()
   {
     cd $ATOMBETA
+    sudo chown -R aditia:nobody $ATOMBETA
     script/build
   }
 

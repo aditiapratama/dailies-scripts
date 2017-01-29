@@ -7,6 +7,10 @@
 
 : ${COMMITFILE=$HOME"/git/projects/aditia_blog/content/pages/commit-logs.md"}
 : ${BLENDER="/home/aditia/blender-git/blender"}
+: ${MASTERBUILD="/home/aditia/blender-git/build_master/"}
+: ${BETABUILD="/home/aditia/blender-git/build_beta/"}
+: ${MODULEBUILD="/home/aditia/blender-git/build_module/"}
+: ${BLENDER28="/home/aditia/blender-git/blender28"}
 : ${BAM="/home/aditia/blender-git/blender-asset-manager"}
 : ${FLAMENCO="/home/aditia/blender-git/flamenco"}
 : ${DOCS="/home/aditia/blender-git/blender_docs"}
@@ -17,11 +21,17 @@
     # CORE #
     ########
 
-     BLENDER_VERSION="2.76"
+     BLENDER_VERSION="2.78"
     _update_sources()
     {
         #Blender Main & Submodule Update
         cd $BLENDER
+        git stash
+	      git fetch -p
+        git pull --rebase
+        git submodule foreach git pull --rebase origin master
+
+        cd $BLENDER28
         git stash
 	      git fetch -p
         git pull --rebase
@@ -37,6 +47,7 @@
     _update_addon_from_git()
     {
         cd $ADDONSGIT && ./git-pull-all.sh
+        vim ./logs.md
     }
 
     _update_env()
@@ -99,6 +110,15 @@ AUTHOR | HASH | MESSAGE
         echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
         git log --pretty=format:'%cn | `%h` | %s | *%cr*' -30 >> $HOME/blender-git/log.md
 
+        cd $BLENDER28 && echo "" >> $HOME/blender-git/log.md
+        echo "" >> $HOME/blender-git/log.md
+        echo "### BLENDER 2.8 " >> $HOME/blender-git/log.md
+        #echo "-------------------------------" >> $HOME/blender-git/log.md
+        echo "" >> $HOME/blender-git/log.md
+        echo "user | hash | comment | time" >> $HOME/blender-git/log.md
+        echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
+        git log --pretty=format:'%cn | `%h` | %s | *%cr*' -15 >> $HOME/blender-git/log.md
+
         cd $BLENDER/release/scripts/addons/ && echo "" >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "### ADDONS " >> $HOME/blender-git/log.md
@@ -149,11 +169,25 @@ AUTHOR | HASH | MESSAGE
         google-chrome $HOME/blender-git/log.md
     }
 
-    _configure_and_build_sources()
+    _configure_and_build_master()
     {
-        cd $BLENDER
-        make -j4
-        notify-send -t 2000 -i blender "Compiling Blender GIT" "Done :D"
+        cd $MASTERBUILD
+        make && make install
+        notify-send -t 2000 -i blender "Compiling Blender Master Branch" "Done :D"
+    }
+
+    _configure_and_build_module()
+    {
+        cd $MODULEBUILD
+        make && make install 
+        notify-send -t 2000 -i blender "Compiling Blender Python Module" "Done :D"
+    }
+
+    _configure_and_build_28()
+    {
+        cd $BETABUILD
+        make && make install 
+        notify-send -t 2000 -i blender "Compiling Blender 2.8 Branch" "Done :D"
     }
 
     _check_branch()
@@ -182,14 +216,14 @@ AUTHOR | HASH | MESSAGE
     echo "BLENDER-UPDATE"
     echo "------------------------------------------------------------"
     echo ""
-    echo "   (1) Update Blender & compile"
-    echo "   (2) Compile only"
-    echo "   (3) Update only"
-    echo "   (4) Update addons from git"
-    echo "   (5) Update Deps"
-    echo "   (6) Check current branch"
-    echo "   (7) view log "
-    echo "   (8) view in gitg"
+    echo "   (1) Update Blender & compile all branch"
+    echo "   (2) Compile Master Branch only"
+    echo "   (3) Compile Python Module only"
+    echo "   (4) Compile Blender 2.8 only"
+    echo "   (5) Update only"
+    echo "   (6) Update addons from git"
+    echo "   (7) Update Deps"
+    echo "   (8) view log "
     echo "   (9) Exit"
     echo ""
     echo "------------------------------------------------------------"
@@ -200,44 +234,47 @@ AUTHOR | HASH | MESSAGE
 
         if [ "$mainmenu" = 1 ]; then
             _update_sources
-            _configure_and_build_sources
-            _build_manual
+            _configure_and_build_master
+            _configure_and_build_module
+            _configure_and_build_28
+            #_build_manual
             _update_view_log
             _view_log
             _endkey
 
         elif [ "$mainmenu" = 2 ]; then
-            _configure_and_build_sources
-            _build_manual
+            _configure_and_build_master
             _view_log
             _endkey
 
         elif [ "$mainmenu" = 3 ]; then
-            _update_sources
-            _update_view_log
-            _update_commit_logs
+            _configure_and_build_module
             _view_log
             _endkey
 
         elif [ "$mainmenu" = 4 ]; then
-            _update_addon_from_git
-            _endkey
-
-        elif [ "$mainmenu" = 5 ]; then
-            _update_env
-            _endkey
-
-        elif [ "$mainmenu" = 6 ]; then
-            _check_branch
-            _endkey
-
-        elif [ "$mainmenu" = 7 ]; then
-            _update_view_log
+            _configure_and_build_28
             _view_log
             _endkey
 
+        elif [ "$mainmenu" = 5 ]; then
+            _update_sources
+            _update_view_log
+            #_update_commit_logs
+            _view_log
+            _endkey
+
+        elif [ "$mainmenu" = 6 ]; then
+            _update_addon_from_git
+            _endkey
+
+        elif [ "$mainmenu" = 7 ]; then
+            _update_env
+            _endkey
+
         elif [ "$mainmenu" = 8 ]; then
-            _gitg
+            _update_view_log
+            _view_log
             _endkey
 
         elif [ "$mainmenu" = 9 ]; then

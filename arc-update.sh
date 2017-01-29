@@ -271,8 +271,8 @@ _install_arc()
 		else
 			git reset && git stash && git clean -fdx
 			$GIT_COMMAND
-			sudo gtk-update-icon-cache /usr/share/icons/Papirus-GTK/
-			sudo gtk-update-icon-cache /usr/share/icons/Papirus-Dark-GTK/
+			sudo gtk-update-icon-cache /usr/share/icons/Papirus/
+			sudo gtk-update-icon-cache /usr/share/icons/Papirus-Dark/
 			if (( $? )); then
 				echo $GU_ERROR_UPDATE_FAIL >&2
 				exit 1
