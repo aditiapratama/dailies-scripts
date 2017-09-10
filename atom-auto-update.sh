@@ -1,10 +1,7 @@
 #!/bin/bash
 : ${ATOM="/home/aditia/git/apps/atom"}
-: ${ATOMBETA="/home/aditia/git/apps/atom-beta"}
-
 # Default to git pull with FF merge in quiet mode
 GIT_COMMAND="git pull --quiet"
-
 # User messages
 GU_ERROR_FETCH_FAIL="Unable to fetch the remote repository."
 GU_ERROR_UPDATE_FAIL="Unable to update the local repository."
@@ -15,8 +12,8 @@ GU_SUCCESS_REPORT="Update complete."
   _download_from_git()
   {
     wget -c https://github.com/atom/atom/releases/latest -O /tmp/latest
-    wget -c $(awk -F '[<>]' '/href=".*atom-amd64.deb/ {match($0,"href=\"(.*.deb)\"",a); print "https://github.com/" a[1]} ' /tmp/latest) -O /tmp/atom-amd64.deb
-    sudo dpkg -i /tmp/atom-amd64.deb
+    wget -c $(awk -F '[<>]' '/href=".*atom-amd64.rpm/ {match($0,"href=\"(.*.rpm)\"",a); print "https://github.com/" a[1]} ' /tmp/latest) -O /tmp/atom-amd64.rpm
+    sudo dpkg -ivh --force /tmp/atom-amd64.rpm
   }
 
   _switch_to_master()
@@ -51,11 +48,8 @@ GU_SUCCESS_REPORT="Update complete."
         echo "Atom $BRANCH is up-to-date "
       else
         $GIT_COMMAND
-        echo "Now building atom $BRANCH"
-        sudo chown -R aditia:nobody $ATOM
-        script/build
-        echo "Now installing atom $BRANCH"
-        sudo script/build --install
+        echo "Now building & installing Atom $BRANCH"
+        script/build --install /opt/atom
         if (( $? )); then
           echo $GU_ERROR_UPDATE_FAIL >&2
           exit 1
@@ -69,37 +63,6 @@ GU_SUCCESS_REPORT="Update complete."
     # else
     #   git pull
     # fi
-  }
-
-  _update_beta()
-  {
-    cd $ATOMBETA
-    git remote update >&-
-  	if (( $? )); then
-        echo $GU_ERROR_FETCH_FAIL >&2
-        exit 1
-    else
-      BRANCH=$(git symbolic-ref --short -q HEAD)
-      LOCAL_SHA=$(git rev-parse --verify HEAD)
-      REMOTE_SHA=$(git rev-parse --verify FETCH_HEAD)
-      if [ $LOCAL_SHA = $REMOTE_SHA ]; then
-        echo $GU_INFO_REPOS_EQUAL
-        echo "Atom $BRANCH is up-to-date "
-      else
-        $GIT_COMMAND
-        echo "Now building atom $BRANCH"
-        sudo chown -R aditia:nobody $ATOMBETA
-        script/build
-        echo "Now installing atom $BRANCH"
-        sudo script/build --install
-        if (( $? )); then
-          echo $GU_ERROR_UPDATE_FAIL >&2
-          exit 1
-        else
-          echo $GU_SUCCESS_REPORT
-        fi
-      fi
-    fi
   }
 
   _update_all_packages()
@@ -123,25 +86,15 @@ GU_SUCCESS_REPORT="Update complete."
     echo "" >> $ATOM/log.md
     echo "" >> $ATOM/log.md
     echo "---" >> $ATOM/log.md
-    cd $ATOMBETA
-    BRANCH=$(git symbolic-ref --short -q HEAD)
-    echo "" >> $ATOM/log.md
-    echo "### ATOM-BETA ![betalogo](file:////home/aditia/git/apps/atom-beta/resources/app-icons/beta/png/24.png) *$BRANCH*" >> $ATOM/log.md
-    echo "---" >> $ATOM/log.md
-    echo "" >> $ATOM/log.md
-    echo "user | hash | comment | time" >> $ATOM/log.md
-    echo "--- | --- | --- | ---" >> $ATOM/log.md
-    git log --pretty=format:'%cn | `%h` | %s |  on %cr' -15 >> $ATOM/log.md
   }
 
   _clean()
   {
     cd $ATOM
-    sudo chown -R aditia:nobody $ATOM
+    sudo chmod -R 777 $ATOM
     script/clean
-    cd $ATOMBETA
-    sudo chown -R aditia:nobody $ATOMBETA
-    script/clean
+    git clean -fdx
+    git stash
     sleep 3s
     echo 'Success Clean Build'
   }
@@ -149,44 +102,28 @@ GU_SUCCESS_REPORT="Update complete."
   _build()
   {
     cd $ATOM
-    sudo chown -R aditia:nobody $ATOM
-    script/build
-  }
-
-  _build_beta()
-  {
-    cd $ATOMBETA
-    sudo chown -R aditia:nobody $ATOMBETA
+    #sudo chmod -R 775 $ATOM
     script/build
   }
 
   _install()
   {
     cd $ATOM
-    sudo script/build --install
+    script/build --install /opt/atom
   }
 
-  _install_beta()
-  {
-    cd $ATOMBETA
-    sudo script/build --install
-  }
-
-  _make_deb()
+  _install_rpm()
   {
     cd $ATOM
-    sudo script/grunt mkdeb
-  }
-
-  _install_deb()
-  {
-    cd /tmp/atom-build
-    sudo dpkg -i atom*.deb
+    script/build --create-rpm-package
+    sudo dnf install ./out/atom.x86_64.rpm
   }
 
   _view_log()
   {
-    cd $ATOM && google-chrome log.md
+    cd $ATOM
+    markdown2 -x tables log.md > log.html
+    xdg-open log.html
   }
 
   _endkey()
@@ -203,11 +140,11 @@ clear
 echo "ATOM-UPDATE"
 echo "------------------------------------------------------------"
 echo ""
-echo "   (1) Update Source, Build and Install Only"
-echo "   (2) Clean, Compile, Install and View Logs Only"
-echo "   (3) Make DEB and Install"
-echo "   (4) Download from git"
-echo "   (5) Exit"
+echo "   (1) Update & Compile Atom"
+echo "   (2) Compile Atom"
+#echo "   (3) Make DEB and Install"
+echo "   (3) Download from git"
+echo "   (4) Exit"
 echo ""
 echo "------------------------------------------------------------"
 echo -n "               Enter your choice (1-6) then press [enter] :"
@@ -217,29 +154,26 @@ clear
 
   if [ "$mainmenu" = 1 ]; then
     _update_sources
-    _update_beta
     _print_log
     _view_log
     _endkey
 
   elif [ "$mainmenu" = 2 ]; then
-    _build
-    _build_beta
     _install
-    _install_beta
+    _print_log
     _view_log
     _endkey
 
-  elif [ "$mainmenu" = 3 ]; then
-    _make_deb
-    _install_deb
-    _endkey
+  #elif [ "$mainmenu" = 3 ]; then
+    #_make_deb
+    #_install_deb
+    #_endkey
 
-  elif [ "$mainmenu" = 4 ]; then
+  elif [ "$mainmenu" = 3 ]; then
     _download_from_git
     _endkey
 
-  elif [ "$mainmenu" = 5 ]; then
+  elif [ "$mainmenu" = 4 ]; then
     _endkey
 
   else

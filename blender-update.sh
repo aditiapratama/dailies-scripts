@@ -58,7 +58,10 @@
 
     _build_manual()
     {
-        cd $DOCS && make
+        cd $DOCS 
+	make clean
+	make html
+        notify-send -t 2000 -i blender "Compiling Blender Docs" "Done!"
     }
 
     _view_manual()
@@ -166,27 +169,28 @@ AUTHOR | HASH | MESSAGE
 
     _view_log()
     {
-        google-chrome $HOME/blender-git/log.md
+	markdown2 -x tables $HOME/blender-git/log.md > $HOME/blender-git/log.html
+        xdg-open $HOME/blender-git/log.html
     }
 
     _configure_and_build_master()
     {
         cd $MASTERBUILD
-        make && make install
-        notify-send -t 2000 -i blender "Compiling Blender Master Branch" "Done :D"
+        make -j4 && make install -j4
+        notify-send -t 2000 -i blender "Compiling Blender Master Branch" "Done!"
     }
 
     _configure_and_build_module()
     {
         cd $MODULEBUILD
-        make && make install 
+        make && make install
         notify-send -t 2000 -i blender "Compiling Blender Python Module" "Done :D"
     }
 
     _configure_and_build_28()
     {
         cd $BETABUILD
-        make && make install 
+        make && make install
         notify-send -t 2000 -i blender "Compiling Blender 2.8 Branch" "Done :D"
     }
 
@@ -216,7 +220,7 @@ AUTHOR | HASH | MESSAGE
     echo "BLENDER-UPDATE"
     echo "------------------------------------------------------------"
     echo ""
-    echo "   (1) Update Blender & compile all branch"
+    echo "   (1) Update All Repo & compile master branch"
     echo "   (2) Compile Master Branch only"
     echo "   (3) Compile Python Module only"
     echo "   (4) Compile Blender 2.8 only"
@@ -235,9 +239,9 @@ AUTHOR | HASH | MESSAGE
         if [ "$mainmenu" = 1 ]; then
             _update_sources
             _configure_and_build_master
-            _configure_and_build_module
-            _configure_and_build_28
-            #_build_manual
+            #_configure_and_build_module
+            #_configure_and_build_28
+            _build_manual
             _update_view_log
             _view_log
             _endkey
