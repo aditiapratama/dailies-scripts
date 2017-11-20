@@ -1,4 +1,4 @@
-#!/bin/sh
+# !/bin/sh
 #
 #: Title       : Blender-update
 #: Author      : Aditia A. Pratama < aditia -dot- ap -at- gmail.com >
@@ -7,8 +7,8 @@
 
 : ${COMMITFILE=$HOME"/git/projects/aditia_blog/content/pages/commit-logs.md"}
 : ${BLENDER="/home/aditia/blender-git/blender"}
-: ${MASTERBUILD="/home/aditia/blender-git/build_master/"}
-: ${BETABUILD="/home/aditia/blender-git/build_beta/"}
+: ${MASTERBUILD="/usr/local/blender-master/"}
+: ${BETABUILD="/usr/local/blender-beta/"}
 : ${MODULEBUILD="/home/aditia/blender-git/build_module/"}
 : ${BLENDER28="/home/aditia/blender-git/blender28"}
 : ${BAM="/home/aditia/blender-git/blender-asset-manager"}
@@ -16,24 +16,22 @@
 : ${DOCS="/home/aditia/blender-git/blender_docs"}
 : ${ADDONSGIT="/home/aditia/blender-git/git-addons"}
 
-
     ########
     # CORE #
     ########
-
-     BLENDER_VERSION="2.78"
+    numCores=$((`cat /proc/cpuinfo | grep processor | wc -l`)) 
     _update_sources()
     {
         #Blender Main & Submodule Update
         cd $BLENDER
         git stash
-	      git fetch -p
+	    git fetch -p
         git pull --rebase
         git submodule foreach git pull --rebase origin master
 
         cd $BLENDER28
         git stash
-	      git fetch -p
+	    git fetch -p
         git pull --rebase
         git submodule foreach git pull --rebase origin master
 
@@ -53,14 +51,14 @@
     _update_env()
     {
         cd $BLENDER/build_files/build_environment/
-        ./install_deps.sh  --build-all --skip-openvdb
+        ./install_deps.sh --build-all --skip-llvm --skip-openvdb --with-opencollada
     }
 
     _build_manual()
     {
-        cd $DOCS 
-	make clean
-	make html
+        cd $DOCS
+	    make clean
+	    make html
         notify-send -t 2000 -i blender "Compiling Blender Docs" "Done!"
     }
 
@@ -104,19 +102,41 @@ AUTHOR | HASH | MESSAGE
     {
         cd $BLENDER
         branchname=$(git symbolic-ref --short -q HEAD)
-        echo "# Current Branch : ![alt text][logo] *$branchname*" > $HOME/blender-git/log.md
-        echo '[logo]: file:///home/aditia/blender-git/blender_48.png "Logo Blender"' >> $HOME/blender-git/log.md
+        blenderlog=$(git log --pretty=format:'%cn | [%h](https://developer.blender.org/rB%h) | %s | *%cr*' -30)
+        commithash=$(git log --pretty=format:'%h' -30)
+        commitname=$(git log --pretty=format:'%cn' -30)
+        commitsubject=$(git log --pretty=format:'%s' -30)
+        committime=$(git log --pretty=format:'%cr' -30)
+        echo '
+<head>
+  <title>Blender Commit Logs</title>
+  <link rel="stylesheet" href="main.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<header id="header">
+  <!-- <img id="logo" src="blender_48.png" alt="JT logo"> -->
+  <h1>Blender Commit Logs</h1>
+  <p>
+    <a href="http://pawitra.studio" target="_blank">by Aditia A. Pratama</a>
+  </p>
+</header>' > $HOME/blender-git/log.md
+        echo "# Current Branch : ![Blender][logo] *$branchname*" >> $HOME/blender-git/log.md
+        echo '[logo]:blender_48.png "Logo Blender"' >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "### BLENDER " >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "user | hash | comment | time" >> $HOME/blender-git/log.md
         echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
-        git log --pretty=format:'%cn | `%h` | %s | *%cr*' -30 >> $HOME/blender-git/log.md
+        # git log --pretty=format:'%cn | [%h](https://developer.blender.org/rB%h) | %s | *%cr*' -30 >> $HOME/blender-git/log.md
+        git log --pretty=format:'%cn | <a href="https://developer.blender.org/rB%h" target="_blank"><code>%h</code><i class="fa fa-external-link" aria-hidden="true"></i></a> | %s | *%cr*' -30 >> $HOME/blender-git/log.md
+        # echo $blenderlog >> $HOME/blender-git/log.md
+        # echo $commitname' | <a href="https://developer.blender.org/rB"'$commithash' target="_blank"><i class="fa fa-external-link" aria-hidden="true"></i><code>'$commithash'</code></a> | ' $commitsubject ' | <i>' $committime '</i>' >> $HOME/blender-git/log.md
 
         cd $BLENDER28 && echo "" >> $HOME/blender-git/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "### BLENDER 2.8 " >> $HOME/blender-git/log.md
-        #echo "-------------------------------" >> $HOME/blender-git/log.md
+        #echo "-------------------------------" >> $HOME/blender-fenced-code-blocksgit/log.md
         echo "" >> $HOME/blender-git/log.md
         echo "user | hash | comment | time" >> $HOME/blender-git/log.md
         echo "--- | --- | --- | ---" >> $HOME/blender-git/log.md
@@ -169,14 +189,14 @@ AUTHOR | HASH | MESSAGE
 
     _view_log()
     {
-	markdown2 -x tables $HOME/blender-git/log.md > $HOME/blender-git/log.html
+	      markdown2 -x tables $HOME/blender-git/log.md > $HOME/blender-git/log.html
         xdg-open $HOME/blender-git/log.html
     }
 
     _configure_and_build_master()
     {
         cd $MASTERBUILD
-        make -j4 && make install -j4
+        make -j$numCores && make install -j$numCores
         notify-send -t 2000 -i blender "Compiling Blender Master Branch" "Done!"
     }
 
@@ -190,7 +210,7 @@ AUTHOR | HASH | MESSAGE
     _configure_and_build_28()
     {
         cd $BETABUILD
-        make && make install
+        make -j$numCores && make install -j$numCores
         notify-send -t 2000 -i blender "Compiling Blender 2.8 Branch" "Done :D"
     }
 
@@ -240,25 +260,25 @@ AUTHOR | HASH | MESSAGE
             _update_sources
             _configure_and_build_master
             #_configure_and_build_module
-            #_configure_and_build_28
-            _build_manual
+            _configure_and_build_28
+            #_build_manual
             _update_view_log
             _view_log
             _endkey
 
         elif [ "$mainmenu" = 2 ]; then
             _configure_and_build_master
-            _view_log
+            # _view_log
             _endkey
 
         elif [ "$mainmenu" = 3 ]; then
             _configure_and_build_module
-            _view_log
+            # _view_log
             _endkey
 
         elif [ "$mainmenu" = 4 ]; then
             _configure_and_build_28
-            _view_log
+            # _view_log
             _endkey
 
         elif [ "$mainmenu" = 5 ]; then

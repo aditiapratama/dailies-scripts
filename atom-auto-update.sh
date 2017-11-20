@@ -109,7 +109,7 @@ GU_SUCCESS_REPORT="Update complete."
   _install()
   {
     cd $ATOM
-    script/build --install /opt/atom
+    script/build --install /usr/local/atom
   }
 
   _install_rpm()
