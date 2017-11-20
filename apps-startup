@@ -1,0 +1,33 @@
+#!/bin/bash
+
+sleep 15s
+
+_IP=$(hostname -I) || true
+if [ "$_IP" ]; then
+  notify-send -t 2000 -i network-wireless "My IP address is " "$_IP" &&
+  #mount -a #GS: mount all drives in /etc/fstab
+  #/usr/local/bin/bing-wallpaper.py &
+  #/usr/bin/seapplet &
+  #sleep 2s
+  #/usr/bin/dropbox start &
+  sleep 2s
+  /opt/HackHands/hackhands &
+  sleep 2s
+  /usr/bin/insync start &
+  sleep 2s
+  /opt/Telegram/Telegram -startintray &
+  sleep 2s
+  /usr/bin/skypeforlinux &
+  sleep 2s
+  /opt/wavebox/Wavebox &
+  sleep 2s
+  #/usr/bin/nextcloud &
+  #sleep 2s
+  /usr/bin/mailspring &
+  sleep 2s
+  notify-send -t 2000 "All Apps has been loaded"
+
+fi
+
+exit 0
+
