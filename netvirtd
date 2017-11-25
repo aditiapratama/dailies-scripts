@@ -1,6 +1,6 @@
-#! /bin/sh
+#!/bin/bash
 #
-# netvird       Start/Stop netvird
+#chkconfig: 234 20 80
 start() {
         su -c "/usr/local/bin/netvirt-agent &"
 }
@@ -17,7 +17,7 @@ case "$1" in
         stop
         ;;
   restart)
-        stop 
+        stop
         sleep 2
         start
         ;;
